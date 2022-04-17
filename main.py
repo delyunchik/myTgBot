@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 import random
 from config import *
+from const import *
 from aiogram import Bot, types
 from aiogram.utils import executor
 from aiogram.utils.emoji import emojize
@@ -15,7 +16,13 @@ from aiogram.utils.markdown import text, bold, italic, code, pre
 from aiogram.types import ParseMode, InputMediaPhoto, InputMediaVideo, ChatActions
 
 # Настраиваем журналирование
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    filename='myTgBot.log',
+    encoding='utf-8',
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    )
 
 # Устанавливаем русский язык в Wikipedia
 wikipedia.set_lang("ru")
