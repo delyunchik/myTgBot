@@ -1,8 +1,11 @@
+from asyncio.log import logger
 import requests
 import json
 from aiogram.utils.markdown import text, bold, italic, code, pre
 from const import WEATHER_LAT, WEATHER_LON
 from config import YANDEX_WEATHER_KEY
+from aiogram.utils.emoji import emojize
+from datetime import datetime, timezone, timedelta
 
 # словарь погодного описания
 condition_dict = {
@@ -29,14 +32,14 @@ condition_dict = {
 
 # словарь направлений ветра
 wind_dir_dict = {
-    'nw': 'северо-западное',
-    'n': 'северное',
-    'ne': 'северо-восточное',
-    'e': 'восточное',
-    'se': 'юго-восточное',
-    's': 'южное',
-    'sw': 'юго-западное',
-    'w': 'западное',
+    'nw': 'северо-западный',
+    'n': 'северный',
+    'ne': 'северо-восточный',
+    'e': 'восточный',
+    'se': 'юго-восточный',
+    's': 'южный',
+    'sw': 'юго-западный',
+    'w': 'западный',
     'c': 'штиль'
 }
 
@@ -55,6 +58,26 @@ cloudness_dict = {
     0.5: 'облачно с прояснениями',
     0.75: 'облачно с прояснениями',
     1: 'пасмурно'
+}
+
+# словарь Луны
+moon_code_dict = {
+    0: 'полнолуние',
+    1: 'убывающая Луна',
+    2: 'убывающая Луна',
+    3: 'убывающая Луна',    
+    4: 'последняя четверть Луны',
+    5: 'убывающая Луна',
+    6: 'убывающая Луна',
+    7: 'убывающая Луна',
+    8: 'новолуние',
+    9: 'растущая Луна',
+    10: 'растущая Луна',
+    11: 'растущая Луна',
+    12: 'первая четверть Луны',
+    13: 'растущая Луна',
+    14: 'растущая Луна',
+    15: 'растущая Луна'
 }
 
 # дополнительное погодное описание
@@ -76,19 +99,21 @@ phenom_condition_dict = {
 
 # получить прогноз погоды
 def get_weather(name=''):
-    # url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
-    #     '&lon=' + WEATHER_LON + '&extra=true'
-    # r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
-    with open('weather.json', 'r') as f:
-        # загрузим json-ответ
-        data = json.load(f)
+    try:
+        # url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
+        #     '&lon=' + WEATHER_LON + '&extra=true'
+        # r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
+
+        with open('weather.json', 'r') as f:
+            # загрузим json-ответ
+            data = json.load(f)
 
         # проанализируем ветер
         wind_dir = data['fact']['wind_dir']
         if wind_dir == 'c':
             wind = 'Полный штиль'
         else:
-            wind = 'Направление ветра ' + wind_dir_dict[wind_dir]
+            wind = 'Ветер ' + str(data['fact']['wind_speed']) + ' м/с, ' + wind_dir_dict[wind_dir]
 
         # наличие грозы
         is_thunder = data['fact']['is_thunder']
@@ -98,27 +123,65 @@ def get_weather(name=''):
             thunder = ''
 
         # проверим есть ли особое погодное состояние
-        phenom_condition_key = data['fact'].get('phenom_condition', default=False)
+        phenom_condition_key = data['fact'].get('phenom_condition', False)
         if phenom_condition_key:
             phenom_condition = ', ' + phenom_condition_dict[phenom_condition_key]
         else:
             phenom_condition = ''
 
+        # преобразуем время в читаемый формат
+        ts = data['now']
+        dt = datetime.fromtimestamp(ts).strftime('%H:%M:%S %d.%m.%Y')
+
         # составим итоговое сообщение
         ans = text(
             'Погода в городе '+data['geo_object']['province']['name'],
-            'Сегодня '+data['now_dt'],
+            'Сейчас ' + dt,
             'На дворе ' + season_dict[data['fact']['season']] + ', ' + \
             condition_dict[data['fact']['condition']] + thunder,
-            'Температура ' + str(data['fact']['temp']) + \
-            ' (ощущается как ' + str(data['fact']['feels_like']) + ')',
+            'Температура ' + str(data['fact']['temp']) + '℃' \
+            ' (ощущается как ' + str(data['fact']['feels_like']) + '℃)',
+            'Относительная влажность ' + str(data['fact']['humidity']) + '%',
+            'Атмосферное давление ' + str(data['fact']['pressure_mm']) + ' мм.рт.ст.',
             ', '.join((
                 wind, 
-                cloudness_dict[data['fact']['cloudness']]
-            )) + phenom_condition,
-            '',  # отделим ссылку пустой строкой
-            'Подробнее по ссылке:',
-            data['info']['url'],
+                cloudness_dict[data['fact']['cloudness']] + phenom_condition                
+            )),
+            '',  # пустая строка - разделитель
             sep='\n'
         )
+
+        # прогнозы на ближайшие дни
+        for forecast in data['forecasts']:
+    
+            # преобразуем время в читаемый формат
+            ts = forecast['date_ts']
+            dt = datetime.fromtimestamp(ts).strftime('%d.%m.%Y')
+
+            ans += text(
+                '\nПрогноз на ' + dt,
+                'Температура днем '+ str(forecast['parts']['day_short']['temp_min']) + '-' + \
+                    str(forecast['parts']['day_short']['temp']) + ' ℃',
+                'Температура ночью '+ str(forecast['parts']['night_short']['temp']) + ' ℃',
+                moon_code_dict[forecast['moon_code']],
+                '',  # пустая строка - разделитель
+                sep='\n'
+            )
+
+        # финальная часть ответа
+        ans += text(
+            '',
+            'Подробнее по ссылке: ' + \
+                data['info']['url'],
+            sep='\n'
+        )
+
+    # что-то пошло не так
+    except Exception as e:
+        # зажурналируем ошибку
+        logger.error(e)
+
+        # вернем дежурный ответ
+        return emojize('Sorry. Попозже проверю :expressionless:')
+
     return ans

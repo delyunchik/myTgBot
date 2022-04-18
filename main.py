@@ -16,7 +16,6 @@ from aiogram.types import ReplyKeyboardRemove, \
 # Настраиваем журналирование
 logging.basicConfig(
     filename='myTgBot.log',
-    encoding='utf-8',
     level=logging.DEBUG,
     format='%(asctime)s [%(levelname)s] %(module)s - %(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
@@ -46,9 +45,6 @@ async def send_welcome(message: types.Message):
     img_url = get_img_url()
     await message.reply_photo(img_url)
 
-    # with open('data/cat.jpg', 'rb') as photo:
-    #     await message.reply_photo(photo, caption=emojize('Cats are here :cat:'))
-
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
@@ -67,7 +63,7 @@ async def process_help_command(message: types.Message):
 @dp.message_handler(regexp='(^cat[s]?$|puss)')
 async def cats(message: types.Message):
     with open('data/cats.jpg', 'rb') as photo:
-        await message.reply_photo(photo, caption='Cats are here 😺')
+        await message.reply_photo(photo, caption='Сюрприиииз! Cats are here 😺')
 
 
 @dp.message_handler(regexp='новост[ьи]')
