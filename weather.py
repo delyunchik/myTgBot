@@ -103,6 +103,7 @@ def get_weather(name=''):
         url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
             '&lon=' + WEATHER_LON + '&extra=true'
         r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
+        data = json.loads(r.text)
 
         # для тестирования
         # with open('weather.json', 'r') as f:
