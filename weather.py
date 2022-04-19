@@ -65,7 +65,7 @@ moon_code_dict = {
     0: 'полнолуние',
     1: 'убывающая Луна',
     2: 'убывающая Луна',
-    3: 'убывающая Луна',    
+    3: 'убывающая Луна',
     4: 'последняя четверть Луны',
     5: 'убывающая Луна',
     6: 'убывающая Луна',
@@ -97,10 +97,14 @@ phenom_condition_dict = {
     'volcanic-ash': 'вулканический пепел'
 }
 
+
 # получить прогноз погоды
 def get_weather(name=''):
+
+    # попробуем получить и распарсить данные сервиса погоды по API
     try:
-        url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
+        url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + \
+            WEATHER_LAT + \
             '&lon=' + WEATHER_LON + '&extra=true'
         r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
         data = json.loads(r.text)
@@ -115,7 +119,8 @@ def get_weather(name=''):
         if wind_dir == 'c':
             wind = 'Полный штиль'
         else:
-            wind = 'Ветер ' + str(data['fact']['wind_speed']) + ' м/с, ' + wind_dir_dict[wind_dir]
+            wind = 'Ветер ' + str(data['fact']['wind_speed']) + ' м/с, ' + \
+                wind_dir_dict[wind_dir]
 
         # наличие грозы
         is_thunder = data['fact']['is_thunder']
@@ -127,7 +132,8 @@ def get_weather(name=''):
         # проверим есть ли особое погодное состояние
         phenom_condition_key = data['fact'].get('phenom_condition', False)
         if phenom_condition_key:
-            phenom_condition = ', ' + phenom_condition_dict[phenom_condition_key]
+            phenom_condition = ', ' + \
+                phenom_condition_dict[phenom_condition_key]
         else:
             phenom_condition = ''
 
@@ -139,15 +145,16 @@ def get_weather(name=''):
         ans = text(
             'Погода в городе '+data['geo_object']['province']['name'],
             'Сейчас ' + dt,
-            'На дворе ' + season_dict[data['fact']['season']] + ', ' + \
+            'На дворе ' + season_dict[data['fact']['season']] + ', ' +
             condition_dict[data['fact']['condition']] + thunder,
-            'Температура ' + str(data['fact']['temp']) + '℃' \
+            'Температура ' + str(data['fact']['temp']) + '℃' +
             ' (ощущается как ' + str(data['fact']['feels_like']) + '℃)',
             'Относительная влажность ' + str(data['fact']['humidity']) + '%',
-            'Атмосферное давление ' + str(data['fact']['pressure_mm']) + ' мм.рт.ст.',
+            'Атмосферное давление ' + str(data['fact']['pressure_mm']) +
+            ' мм.рт.ст.',
             ', '.join((
-                wind, 
-                cloudness_dict[data['fact']['cloudness']] + phenom_condition                
+                wind,
+                cloudness_dict[data['fact']['cloudness']] + phenom_condition
             )),
             '',  # пустая строка - разделитель
             sep='\n'
@@ -155,16 +162,19 @@ def get_weather(name=''):
 
         # прогнозы на ближайшие дни
         for forecast in data['forecasts']:
-    
+
             # преобразуем время в читаемый формат
             ts = forecast['date_ts']
             dt = datetime.fromtimestamp(ts).strftime('%d.%m.%Y')
 
+            # добавим блок к тексту ответа
             ans += text(
                 '\nПрогноз на ' + dt,
-                'Температура днем '+ str(forecast['parts']['day_short']['temp_min']) + '-' + \
-                    str(forecast['parts']['day_short']['temp']) + ' ℃',
-                'Температура ночью '+ str(forecast['parts']['night_short']['temp']) + ' ℃',
+                'Температура днем ' +
+                str(forecast['parts']['day_short']['temp_min']) + '-' +
+                str(forecast['parts']['day_short']['temp']) + ' ℃',
+                'Температура ночью ' +
+                str(forecast['parts']['night_short']['temp']) + ' ℃',
                 moon_code_dict[forecast['moon_code']],
                 '',  # пустая строка - разделитель
                 sep='\n'
@@ -173,17 +183,19 @@ def get_weather(name=''):
         # финальная часть ответа
         ans += text(
             '',
-            'Подробнее по ссылке: ' + \
-                data['info']['url'],
+            'Подробнее по ссылке: ' +
+            data['info']['url'],
             sep='\n'
         )
 
     # что-то пошло не так
     except Exception as e:
+
         # зажурналируем ошибку
         logger.error(e)
 
         # вернем дежурный ответ
         return emojize('Sorry. Попозже проверю :expressionless:')
 
+    # вернем сформированный ответ
     return ans
