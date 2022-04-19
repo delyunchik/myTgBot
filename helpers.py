@@ -11,46 +11,6 @@ from aiogram.utils.emoji import emojize
 wikipedia.set_lang("ru")
 
 
-# получить случайную шутку
-def get_joke(name=''):
-    try:
-        while True:
-            # найдем произвольную шутку
-            r = requests.get('http://bashorg.org/casual')
-
-            # распарсим вывод
-            soup = BeautifulSoup(r.content, "html.parser")
-
-            # получим нужный блок
-            d = soup.find_all("div", class_="q")
-
-            # вернем найденный текст пропустив 6 строк заголовка
-            a = d[0].text.split('\n')
-            text = '\n'.join(a[6:])
-
-            # проверим, что шутка хорошая
-            good_joke = True
-            for word in ['опа', 'уй']:
-                if word in text:
-                    good_joke = False
-                    break
-
-            # если шутка все еще хорошая, выходим из цикла
-            if good_joke:
-                break
-
-        # вернем текст найденной шутки
-        return text
-
-    # что-то пошло не так
-    except Exception as e:
-        # зажурналируем ошибку
-        logging.error(e)
-
-        # вернем дежурный ответ
-        return emojize('Не до шуток сейчас :expressionless:')
-
-
 # получить произвольное фото по названию
 # через поиск картинок Яндекса
 def get_img_url(name=''):
@@ -134,6 +94,46 @@ def get_wiki(s):
 
         # дежурная фраза и пустая ссылка
         return ('В энциклопедии нет информации об этом', '')
+
+
+# получить случайную шутку
+def get_joke(name=''):
+    try:
+        while True:
+            # найдем произвольную шутку
+            r = requests.get('http://bashorg.org/casual')
+
+            # распарсим вывод
+            soup = BeautifulSoup(r.content, "html.parser")
+
+            # получим нужный блок
+            d = soup.find_all("div", class_="q")
+
+            # вернем найденный текст пропустив 6 строк заголовка
+            a = d[0].text.split('\n')
+            text = '\n'.join(a[6:])
+
+            # проверим, что шутка хорошая
+            good_joke = True
+            for word in ['опа', 'уй', 'еба', 'пиз', 'чле']:
+                if word in text:
+                    good_joke = False
+                    break
+
+            # если шутка все еще хорошая, выходим из цикла
+            if good_joke:
+                break
+
+        # вернем текст найденной шутки
+        return text
+
+    # что-то пошло не так
+    except Exception as e:
+        # зажурналируем ошибку
+        logging.error(e)
+
+        # вернем дежурный ответ
+        return emojize('Не до шуток сейчас :expressionless:')
 
 
 # получить новости
