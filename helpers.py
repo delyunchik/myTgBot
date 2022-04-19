@@ -115,7 +115,7 @@ def get_joke(name=''):
 
             # проверим, что шутка хорошая
             good_joke = True
-            for word in ['опа', 'уй', 'еба', 'пиз', 'чле']:
+            for word in ['опа', 'уй', 'еба', 'пиз', 'чле', 'екс']:
                 if word in text:
                     good_joke = False
                     break
