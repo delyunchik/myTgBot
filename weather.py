@@ -100,13 +100,14 @@ phenom_condition_dict = {
 # получить прогноз погоды
 def get_weather(name=''):
     try:
-        # url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
-        #     '&lon=' + WEATHER_LON + '&extra=true'
-        # r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
+        url = 'https://api.weather.yandex.ru/v2/forecast?lat=' + WEATHER_LAT + \
+            '&lon=' + WEATHER_LON + '&extra=true'
+        r = requests.get(url, headers={'X-Yandex-API-Key': YANDEX_WEATHER_KEY})
 
-        with open('weather.json', 'r') as f:
-            # загрузим json-ответ
-            data = json.load(f)
+        # для тестирования
+        # with open('weather.json', 'r') as f:
+        #     # загрузим json-ответ
+        #     data = json.load(f)
 
         # проанализируем ветер
         wind_dir = data['fact']['wind_dir']
